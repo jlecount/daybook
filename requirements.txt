@@ -11,12 +11,11 @@ packaging==19.1
 parso==0.5.1
 pexpect==4.7.0
 pickleshare==0.7.5
-pkg-resources==0.0.0
 pluggy==0.12.0
 prompt-toolkit==2.0.9
 ptyprocess==0.6.0
 py==1.8.0
-git+https://github.com/mijdavis2/pygit.git#egg=pygit
+git+git://github.com/jlecount/pygit.git@allow_list_or_str_to_git#egg=pygit
 Pygments==2.4.2
 pyparsing==2.4.2
 pytest==5.1.2
@@ -25,3 +24,4 @@ traitlets==4.3.2
 wcwidth==0.1.7
 zipp==0.6.0
 tox==3.14.0
+PyYAML==5.1.2
