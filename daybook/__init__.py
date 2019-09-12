@@ -2,6 +2,7 @@ import datetime
 import os
 import time
 
+import yaml
 from pygit import PyGit
 
 from daybook.utils import get_current_date
@@ -9,8 +10,9 @@ from daybook.utils import get_current_date
 
 class Daybook(object):
 
-    def __init__(self, base_dir):
-        self.base_dir = base_dir
+    def __init__(self, book_name, base_dir):
+        self.book_name = book_name
+        self.base_dir = os.path.join(base_dir, book_name)
         if os.path.exists(os.path.join(base_dir, '.git')):
             self.git = PyGit(base_dir, new_repo=False)
         else:
@@ -37,5 +39,52 @@ class Daybook(object):
         os.makedirs(os.path.dirname(filename), exist_ok=True)
         with open(filename, 'w') as fp:
             fp.writelines(entry)
+
+    def _get_files_matching_dates(self, before_date, after_date):
+        log_stmt = ["log", "--name-only", "--pretty=%b"]
+        if before_date:
+            log_stmt += [f"--until={before_date}"]
+        if after_date:
+            log_stmt += [f"--since={after_date}"]
+
+        filenames = self.git(log_stmt)
+        return [os.path.join(os.path.dirname(self.base_dir), fn) for fn in filenames if fn]
+
+
+    def list_entries(self, max_entries=10, with_tags=None, with_text=None, after_date=None, before_date=None):
+        """
+        :param max_entries: max number of matches to return
+        :param with_tags: filter on tags.  None means no tag filtering
+        :param with_text: filter on text.  None means no text filtering
+        :param after_date: Only return entries after date. None means no after date filtering
+        :param before_date: Only return entries before date. None means no after date filtering
+        :return: all entries matching the given criteria
+        """
+        yaml_list = []
+        files = self._get_files_matching_dates(before_date, after_date)
+        for f in files:
+            with open(f, 'r') as fp:
+                y = yaml.safe_load(fp)
+                if with_tags:
+                    if not set(with_tags).intersection(y.tags):
+                        continue
+                if self._is_encrypted(y):
+                    yaml_list.append(self._decrypt(y['body']))
+                else:
+                    yaml_list.append(y['body'])
+        return yaml_list
+
+    def _decrypt(self, body):
+        raise Exception("Encrypted data not yet supported")
+
+    def _is_encrypted(self, y):
+        if 'is_encrypted' in y:
+            return y['is_encrypted']
+        else:
+            return False
+
+
+
+
 
 
