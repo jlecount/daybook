@@ -5,14 +5,16 @@ import subprocess
 from hamcrest import *
 from pygit import PyGit
 
+from daybook import Daybook
 from daybook.entry import Entry
 
 
 @pytest.fixture(scope="module")
-def db():
-    test_repo_workspace = os.path.join("/tmp", "daybook", os.getpid())
+def db() -> Daybook :
+    test_repo_workspace = os.path.join("/tmp", "daybook", str(os.getpid()))
+    print("workspace is " + test_repo_workspace)
     yield Daybook(test_repo_workspace)
-    #zshutil.rmtree(test_repo_workspace)
+    #shutil.rmtree(test_repo_workspace)
 
 
 def test_create_new_entry(db:Daybook):
