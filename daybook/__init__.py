@@ -51,7 +51,8 @@ class Daybook(object):
         return [os.path.join(os.path.dirname(self.base_dir), fn) for fn in filenames if fn]
 
 
-    def list_entries(self, max_entries=10, with_tags=None, with_text=None, after_date=None, before_date=None):
+
+    def _get_matches(self, max_entries=10, with_tags=None, with_text=None, after_date=None, before_date=None):
         """
         :param max_entries: max number of matches to return
         :param with_tags: filter on tags.  None means no tag filtering
@@ -68,11 +69,37 @@ class Daybook(object):
                 if with_tags:
                     if not set(with_tags).intersection(y.tags):
                         continue
-                if self._is_encrypted(y):
-                    yaml_list.append(self._decrypt(y['body']))
-                else:
-                    yaml_list.append(y['body'])
+                yaml_list.append(y)
         return yaml_list
+
+
+    def list_entries(self, max_entries=10, with_tags=None, with_text=None, after_date=None, before_date=None):
+        """
+        :param max_entries: max number of matches to return
+        :param with_tags: filter on tags.  None means no tag filtering
+        :param with_text: filter on text.  None means no text filtering
+        :param after_date: Only return entries after date. None means no after date filtering
+        :param before_date: Only return entries before date. None means no after date filtering
+        :return: all entries matching the given criteria
+        """
+        entries = self._get_matches(max_entries, with_tags, with_text, after_date, before_date)
+
+        def possible_decrypt(e):
+            if self._is_encrypted(e):
+                return self._decrypt(e['body'])
+            else:
+                return e['body']
+
+        return [possible_decrypt(e) for e in entries]
+
+    def list_tags(self):
+        entries = self._get_matches()
+        tags = []
+        for e in entries:
+            tags += e['tag_list']
+
+        print("tags are {}".format(tags))
+        return list(set(tags))
 
     def _decrypt(self, body):
         raise Exception("Encrypted data not yet supported")

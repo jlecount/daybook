@@ -17,7 +17,10 @@ class Entry(object):
         """
         self.title = title
         self.body = body
-        self.tag_list = tag_list or []
+        if tag_list and type(tag_list) != list:
+            raise Exception("tag_list must be a list")
+        else:
+            self.tag_list = tag_list or []
         self.is_encrypted = is_encrypted
 
     def to_yaml(self):
