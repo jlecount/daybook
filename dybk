@@ -2,8 +2,8 @@
 import os
 import sys
 import yaml
-import argparse
 from daybook import Daybook
+from daybook.command_processor import CommandProcessor
 
 DAYBOOK_CFG = os.path.join(os.getenv("HOME"), ".daybook.yml")
 
@@ -16,17 +16,24 @@ else:
         raise Exception(PYTHON_VERSION_ERROR)
 
 
-def get_project_config():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-n", "--name")
-    parser.add_argument("-b", "--base_directory")
-
-    args = parser.parse_args()
+def _get_daybook_config(self):
     if os.path.exists(DAYBOOK_CFG):
         with open(DAYBOOK_CFG) as fp:
-            daybook_cfg = yaml.safe_load(fp.readlines())
+            return yaml.safe_load(fp.readlines())
     else:
-        daybook_cfg = {}
+        return {}
+
+def get_project_config():
+    cp = CommandProcessor()
+    project_name, command, args = cp.parse_args()
+    print("Command: " + command)
+    print("project_name: {}".format(project_name))
+    sub_args = [a for a in dir(args) if not a.startswith("_")]
+    sub_arg_values = {s: getattr(args,s) for s in sub_args}
+    print("Args: {}".format(sub_arg_values))
+    sys.exit(0)
+
+    daybook_cfg = self._get_daybook_config()
 
     project_name = args.name
     project_dir = args.base_directory
