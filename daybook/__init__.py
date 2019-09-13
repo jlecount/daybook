@@ -1,5 +1,6 @@
 import datetime
 import os
+import shutil
 import time
 
 import yaml
@@ -12,13 +13,16 @@ class Daybook(object):
 
     def __init__(self, book_name, base_dir):
         self.book_name = book_name
-        self.base_dir = os.path.join(base_dir, book_name)
-        if os.path.exists(os.path.join(base_dir, '.git')):
-            self.git = PyGit(base_dir, new_repo=False)
+        self.base_dir = base_dir
+        self.project_dir = os.path.join(self.base_dir, self.book_name)
+        if os.path.exists(os.path.join(self.base_dir, '.git')):
+            self.git = PyGit(self.base_dir, new_repo=False)
         else:
-            print("Creating {}".format(base_dir))
-            os.makedirs(base_dir, exist_ok=True)
-            self.git = PyGit(base_dir, new_repo=True)
+            print("Creating project {0} within {1}".format(self.book_name, self.base_dir))
+            os.makedirs(self.base_dir, exist_ok=True)
+            self.git = PyGit(self.base_dir, new_repo=True)
+
+        os.makedirs(self.project_dir, exist_ok=True)
 
     def commit_entry(self, entry):
         """Commit the entry to git"""
@@ -33,7 +37,7 @@ class Daybook(object):
         Sure, you could get name collisions if you call this more than once a second, but that's not a use-case here.
         :return:
         """
-        return os.path.join(self.base_dir, get_current_date(), str(time.time()) + ".txt")
+        return os.path.join(self.project_dir, get_current_date(), str(time.time()) + ".txt")
 
     def _write_entry_to_disk(self, filename, entry):
         os.makedirs(os.path.dirname(filename), exist_ok=True)
@@ -48,7 +52,7 @@ class Daybook(object):
             log_stmt += [f"--since={after_date}"]
 
         filenames = self.git(log_stmt)
-        return [os.path.join(os.path.dirname(self.base_dir), fn) for fn in filenames if fn]
+        return [os.path.join(os.path.dirname(self.project_dir), fn) for fn in filenames if fn]
 
 
 
