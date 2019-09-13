@@ -55,3 +55,29 @@ def get_project_config():
 
 project_name, project_dir = get_project_config()
 db = Daybook(project_name, project_dir)
+
+#
+# Use argh -- https://argh.readthedocs.io/en/latest/
+#
+
+#project_name arg is mandatory
+
+# subcommands
+
+# create-project
+#   "project_dir" arg, mandatory
+#   creates new project, adds to ~/.daybook.yml
+
+# list-entries
+#   'max_entries' arg, optional
+#   'tags' arg, optional
+#   'text' arg, optional
+#   'after_date' arg, optional
+#   'before_date' arg, optional
+
+# list-tags
+
+# create-entry
+#     all text is implicitly a body
+#     --tags  "a,b,c" are tags
+#
