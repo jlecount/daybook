@@ -29,6 +29,7 @@ class Daybook(object):
         filename = self._get_entry_filename()
         self._write_entry_to_disk(filename, entry.to_yaml())
         self.git("add {}".format(filename))
+
         return self.git(['commit', '-m', '{}'.format("New entry: {}".format(entry.title))])
 
     def _get_entry_filename(self):
@@ -54,8 +55,6 @@ class Daybook(object):
         filenames = self.git(log_stmt)
         return [os.path.join(os.path.dirname(self.project_dir), fn) for fn in filenames if fn]
 
-
-
     def _get_matches(self, max_entries=10, with_tags=None, with_text=None, after_date=None, before_date=None):
         """
         :param max_entries: max number of matches to return
@@ -67,15 +66,23 @@ class Daybook(object):
         """
         yaml_list = []
         files = self._get_files_matching_dates(before_date, after_date)
+        num_found = 0
         for f in files:
             with open(f, 'r') as fp:
                 y = yaml.safe_load(fp)
                 if with_tags:
                     if not set(with_tags).intersection(y.tags):
                         continue
+                if with_text:
+                    if with_text not in y['body']:
+                        continue
+                num_found += 1
+
+                if max_entries and num_found > max_entries:
+                    return yaml_list
+
                 yaml_list.append(y)
         return yaml_list
-
 
     def list_entries(self, max_entries=10, with_tags=None, with_text=None, after_date=None, before_date=None):
         """
@@ -113,9 +120,3 @@ class Daybook(object):
             return y['is_encrypted']
         else:
             return False
-
-
-
-
-
-

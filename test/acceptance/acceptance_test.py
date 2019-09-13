@@ -40,6 +40,44 @@ def test_list_tags_single_tag(db:Daybook):
     tags = db.list_tags()
     assert_that(tags, only_contains("entry1"))
 
+def test_list_entries_with_text(db:Daybook):
+    e1 = Entry(
+        "Some title",
+        "entry here",
+        tag_list=["tag1", "tag2"]
+    )
+    e2 = Entry(
+        "another title",
+        "another entry here",
+        tag_list=["tag1", "tag2"]
+    )
+
+    db.commit_entry(e1)
+    db.commit_entry(e2)
+    entries = db.list_entries(with_text="another")
+    assert_that(entries, has_length(1))
+
+
+
+def test_get_entries_with_max_num(db:Daybook):
+    e1 = Entry(
+        "Some title",
+        "entry here",
+        tag_list=["tag1", "tag2"]
+    )
+    e2 = Entry(
+        "Another title",
+        "entry here",
+        tag_list=["tag3", "tag4"]
+    )
+
+    db.commit_entry(e1)
+    db.commit_entry(e2)
+
+    entries = db.list_entries(max_entries=1)
+    assert_that(entries, has_length(1))
+
+
 def test_list_tags_multiple_tags(db:Daybook):
     e1 = Entry(
         "Some title",
