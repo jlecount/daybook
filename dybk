@@ -1,11 +1,13 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import os
 import sys
-import yaml
-from daybook import Daybook
-from daybook.command_processor import CommandProcessor
+from argparse import ArgumentParser
 
-DAYBOOK_CFG = os.path.join(os.getenv("HOME"), ".daybook.yml")
+import yaml
+
+import commands
+from daybook import Daybook
+from misc import get_daybook_config
 
 PYTHON_VERSION_ERROR = "Must be using Python 3.6+"
 
@@ -16,75 +18,35 @@ else:
         raise Exception(PYTHON_VERSION_ERROR)
 
 
-def _get_daybook_config(self):
-    if os.path.exists(DAYBOOK_CFG):
-        with open(DAYBOOK_CFG) as fp:
-            return yaml.safe_load(fp.readlines())
+def parse_args():
+    parser = ArgumentParser()
+    parser.add_argument("--name", required=True)
+    parser.add_argument("command")
+    args = parser.parse_args(sys.argv[1:4])
+    daybooks = get_daybook_config()['daybooks']
+
+    daybook_name = args.name
+
+    if daybook_name not in daybooks:
+        print("""
+        No such project: {0}. 
+    
+        Use install --name {0} to create it first.
+        """.format(daybook_name))
+        sys.exit(1)
     else:
-        return {}
-
-def get_project_config():
-    cp = CommandProcessor()
-    project_name, command, args = cp.parse_args()
-    print("Command: " + command)
-    print("project_name: {}".format(project_name))
-    sub_args = [a for a in dir(args) if not a.startswith("_")]
-    sub_arg_values = {s: getattr(args,s) for s in sub_args}
-    print("Args: {}".format(sub_arg_values))
-    sys.exit(0)
-
-    daybook_cfg = self._get_daybook_config()
-
-    project_name = args.name
-    project_dir = args.base_directory
-
-    if not project_name:
-        raise Exception("You must pass in a project name")
-
-    if not project_dir:
-        pre_existing_project_names = [c.get('name') for c in daybook_cfg]
-        if project_name in pre_existing_project_names:
-            base_projects = [c.get('directory') for c in daybook_cfg if c['name'] == project_name]
-            if not base_projects:
-                print("No such project found: {}".format(project_name))
-                sys.exit(2)
-            else:
-                project = base_projects[1]
-        else:
-            raise Exception("You must pass in a base_directory argument")
-
-    return (project_name, project_dir)
-
+        basedir = daybooks[args.name]['basedir']
+        raw_cmd = args.command
+        subcommand = raw_cmd.lower().replace('-', '_')
+        return (daybook_name, basedir, subcommand)
 
 #
 # MAIN
 #
 
-project_name, project_dir = get_project_config()
-db = Daybook(project_name, project_dir)
+daybook_name, basedir, subcommand = parse_args()
 
-#
-# Use argh -- https://argh.readthedocs.io/en/latest/
-#
+book = Daybook(daybook_name, basedir)
 
-#project_name arg is mandatory
-
-# subcommands
-
-# create-project
-#   "project_dir" arg, mandatory
-#   creates new project, adds to ~/.daybook.yml
-
-# list-entries
-#   'max_entries' arg, optional
-#   'tags' arg, optional
-#   'text' arg, optional
-#   'after_date' arg, optional
-#   'before_date' arg, optional
-
-# list-tags
-
-# create-entry
-#     all text is implicitly a body
-#     --tags  "a,b,c" are tags
-#
+# Execute the subcommand
+getattr(commands, subcommand)(book)

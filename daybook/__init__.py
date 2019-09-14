@@ -13,7 +13,7 @@ class Daybook(object):
 
     def __init__(self, book_name, base_dir):
         self.book_name = book_name
-        self.base_dir = base_dir
+        self.base_dir = os.path.expanduser(base_dir)
         self.project_dir = os.path.join(self.base_dir, self.book_name)
         if os.path.exists(os.path.join(self.base_dir, '.git')):
             self.git = PyGit(self.base_dir, new_repo=False)
