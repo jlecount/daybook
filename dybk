@@ -1,13 +1,9 @@
 #!/usr/bin/env python3
-import os
 import sys
-from argparse import ArgumentParser
 
-import yaml
+import argh
 
 import commands
-from daybook import Daybook
-from misc import get_daybook_config
 
 PYTHON_VERSION_ERROR = "Must be using Python 3.6+"
 
@@ -18,35 +14,15 @@ else:
         raise Exception(PYTHON_VERSION_ERROR)
 
 
-def parse_args():
-    parser = ArgumentParser()
-    parser.add_argument("--name", required=True)
-    parser.add_argument("command")
-    args = parser.parse_args(sys.argv[1:4])
-    daybooks = get_daybook_config()['daybooks']
-
-    daybook_name = args.name
-
-    if daybook_name not in daybooks:
-        print("""
-        No such project: {0}. 
-    
-        Use install --name {0} to create it first.
-        """.format(daybook_name))
-        sys.exit(1)
-    else:
-        basedir = daybooks[args.name]['basedir']
-        raw_cmd = args.command
-        subcommand = raw_cmd.lower().replace('-', '_')
-        return (daybook_name, basedir, subcommand)
 
 #
 # MAIN
 #
 
-daybook_name, basedir, subcommand = parse_args()
+# register commands
+parser = argh.ArghParser()
 
-book = Daybook(daybook_name, basedir)
+parser.add_commands(commands.get_commands())
 
-# Execute the subcommand
-getattr(commands, subcommand)(book)
+if __name__ == '__main__':
+    parser.dispatch()
