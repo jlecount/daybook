@@ -70,7 +70,7 @@ class Daybook(object):
             cwd=self.project_dir
         ).decode('ascii').split('\n')
 
-        filenames = [f for f in raw if f]
+        filenames = [f for f in raw if f and os.path.exists(os.path.join(self.base_dir, f))]
 
         return [os.path.join(os.path.dirname(self.project_dir), fn) for fn in filenames if fn]
 
@@ -113,14 +113,14 @@ class Daybook(object):
                 yaml_list.append((f, entry))
         return yaml_list
 
-    def list_entries(self, max_entries=10, with_tags=None, with_text=None, after_date=None, before_date=None):
+    def list_entries(self, max_entries=10, with_tags=None, with_text=None, after_date=None, before_date=None) -> tuple:
         """
         :param max_entries: max number of matches to return
         :param with_tags: filter on tags.  None means no tag filtering
         :param with_text: filter on text.  None means no text filtering
         :param after_date: Only return entries after date. None means no after date filtering
         :param before_date: Only return entries before date. None means no after date filtering
-        :return: all entries matching the given criteria
+        :return: tuple of (file, entry) of all entries matching the given criteria.  All entries are decrypted.
         """
         filenames_and_entries = self._get_matches(max_entries, with_tags, with_text, after_date, before_date)
 
@@ -130,19 +130,15 @@ class Daybook(object):
             else:
                 return e
 
-        filenames_and_entries = [(f, possible_decrypt(f, e)) for f, e in filenames_and_entries]
-        for f, e in filenames_and_entries:
-            print("----- {f} -----".format(f=f))
-            for line in e:
-                print(line)
+        return [(f, possible_decrypt(f, e)) for f, e in filenames_and_entries]
 
-    def _find_tags_in_entry(self, entry):
-        return re.findall(r'@@\S+', entry)
+    def _find_tags_in_entry(self, entry:list) -> list:
+        return re.findall(r'@@\S+', '\n'.join(entry))
 
     def list_tags(self):
-        entries = self._get_matches()
+        files_and_entries = self._get_matches()
         tags = []
-        for e in entries:
+        for f,e in files_and_entries:
             tags += self._find_tags_in_entry(e)
 
         return list(set(tags))

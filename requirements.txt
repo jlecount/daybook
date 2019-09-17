@@ -26,3 +26,4 @@ wcwidth==0.1.7
 zipp==0.6.0
 tox==3.14.0
 PyYAML==5.1.2
+clint==0.5.1

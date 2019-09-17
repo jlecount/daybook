@@ -1,6 +1,7 @@
 import re
 import sys
 import yaml
+from clint.textui import puts as _puts, indent as _indent, colored as _colored
 import os
 import tempfile
 import subprocess
@@ -12,6 +13,7 @@ from daybook import Daybook, encryption
 DAYBOOK__CFG = os.path.join(os.getenv("HOME"), ".daybook.yml")
 EDITOR = os.environ.get('EDITOR', 'vim')
 _CFG = None
+
 
 def get_commands() -> list:
     this_module = sys.modules[__name__]
@@ -55,11 +57,14 @@ def _add_project_to_cfg(existing_cfg, name, basedir, default_template_filename=N
 
 
 def install(diary_name: str, base_dir: str, default_template_filename: str = None):
-    _add_project_to_cfg(_get_daybook_config(), diary_name, base_dir, default_template_filename=default_template_filename)
+    _add_project_to_cfg(_get_daybook_config(), diary_name, base_dir,
+                        default_template_filename=default_template_filename)
+
 
 def list_daybooks():
     for db in _get_daybook_config()['daybooks']:
         print(db)
+
 
 def _editor_create_new_entry() -> str:
     initial_message = b""
@@ -75,7 +80,7 @@ def _editor_create_new_entry() -> str:
         return edited_message.decode("utf-8")
 
 
-def get_entry_title(entry:str):
+def _get_entry_title(entry: str):
     """
     Get the title from an entry.  The title is the first non-whitespace line.
 
@@ -89,10 +94,11 @@ def get_entry_title(entry:str):
         else:
             return l
 
+
 def create_entry(diary_name: str, is_encrypted=False) -> None:
     book = Daybook(diary_name, _get_basedir_for_diary(diary_name))
     entry = _editor_create_new_entry()
-    title = get_entry_title(entry)
+    title = _get_entry_title(entry)
     if is_encrypted:
         entry = encryption.encrypt(entry)
     book.commit_entry(entry, title=title, is_encrypted=is_encrypted)
@@ -100,15 +106,18 @@ def create_entry(diary_name: str, is_encrypted=False) -> None:
 
 def list_entries(diary_name: str, max_entries=None, with_tags=None, with_text=None, before_date=None, after_date=None):
     book = Daybook(diary_name, _get_basedir_for_diary(diary_name))
-    print(
-        book.list_entries(
-            max_entries=max_entries,
-            with_tags=with_tags,
-            with_text=with_text,
-            after_date=after_date,
-            before_date=before_date
-        )
+    entries = book.list_entries(
+        max_entries=max_entries,
+        with_tags=with_tags,
+        with_text=with_text,
+        after_date=after_date,
+        before_date=before_date
     )
+    for f, e in entries:
+        _puts(_colored.blue("----- {f} -----".format(f=f)))
+        for line in e:
+            with _indent(4):
+                _puts(line)
 
 
 def list_tags(diary_name: str) -> None:
