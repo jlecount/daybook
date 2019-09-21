@@ -14,16 +14,24 @@ from daybook.utils import get_current_date
 
 class Daybook(object):
 
-    def __init__(self, book_name, base_dir):
+    def __init__(self, book_name, base_dir, remote_url):
         self.book_name = book_name
+        self.remote_url = remote_url
         self.base_dir = os.path.expanduser(base_dir)
         self.project_dir = os.path.join(self.base_dir, self.book_name)
         if os.path.exists(os.path.join(self.base_dir, '.git')):
             self.git = PyGit(self.base_dir, new_repo=False)
         else:
-            print("Creating project {0} within {1}".format(self.book_name, self.base_dir))
+            print(
+                "Creating project {0} within {1} with remote {2}".format(
+                    self.book_name,
+                    self.base_dir,
+                    self.remote_url
+                )
+            )
             os.makedirs(self.base_dir, exist_ok=True)
             self.git = PyGit(self.base_dir, new_repo=True)
+            self.git("remote add origin {}".format(self.remote_url))
 
         os.makedirs(self.project_dir, exist_ok=True)
 
@@ -132,13 +140,13 @@ class Daybook(object):
 
         return [(f, possible_decrypt(f, e)) for f, e in filenames_and_entries]
 
-    def _find_tags_in_entry(self, entry:list) -> list:
+    def _find_tags_in_entry(self, entry: list) -> list:
         return re.findall(r'@@\S+', '\n'.join(entry))
 
     def list_tags(self):
         files_and_entries = self._get_matches()
         tags = []
-        for f,e in files_and_entries:
+        for f, e in files_and_entries:
             tags += self._find_tags_in_entry(e)
 
         return list(set(tags))
