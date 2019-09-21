@@ -141,7 +141,7 @@ class Daybook(object):
         return [(f, possible_decrypt(f, e)) for f, e in filenames_and_entries]
 
     def _find_tags_in_entry(self, entry: list) -> list:
-        return re.findall(r'@@\S+', '\n'.join(entry))
+        return [t.replace("@@", '') for t in re.findall(r'@@\S+', '\n'.join(entry))]
 
     def list_tags(self):
         files_and_entries = self._get_matches()
