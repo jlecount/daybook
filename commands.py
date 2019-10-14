@@ -113,7 +113,8 @@ def create_entry(diary_name: str, is_encrypted=False) -> None:
     book.commit_entry(entry, title=title, is_encrypted=is_encrypted)
 
 
-def list_entries(diary_name: str, max_entries=None, with_tags=None, with_text=None, before_date=None, after_date=None):
+def list_entries(diary_name: str, max_entries:int=None, with_tags=None, with_text=None, before_date=None, after_date=None):
+    max_entries=int(max_entries or '1000') #FIXME: how do we do this generally correctly?
     book = Daybook(diary_name, _get_base_dir_for_diary(diary_name), _get_remote_url_for_diary(diary_name))
     entries = book.list_entries(
         max_entries=max_entries,

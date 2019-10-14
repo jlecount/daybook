@@ -47,7 +47,8 @@ class Daybook(object):
         self._write_entry_to_disk(filename, entry)
         self.execute_cmd("add {}".format(filename))
 
-        return self.execute_cmd(['commit', '-m', '{}'.format("New entry: {}".format(entry.title))])
+        print(self.execute_cmd(['commit', '-m', '{}'.format("New entry: {}".format(entry.title))]))
+        return "Saved entry: {}".format(filename)
 
     def _get_entry_filename(self, is_encrypted=False):
         """
@@ -92,7 +93,7 @@ class Daybook(object):
     def _found_any_text_in_entry(self, entry_list, text):
         return text in '\n'.join(entry_list)
 
-    def _get_matches(self, max_entries=10, with_tags=None, with_text=None, after_date=None, before_date=None) -> tuple:
+    def _get_matches(self, max_entries:int=10, with_tags:str=None, with_text:str=None, after_date=None, before_date=None) -> tuple:
         """
         :param max_entries: max number of matches to return
         :param with_tags: filter on tags.  None means no tag filtering
