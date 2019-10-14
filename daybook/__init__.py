@@ -81,19 +81,13 @@ class Daybook(object):
         
         :return: a set of files between two dates.  The format should be that which can be parsed by git.
         """
-        log_stmt = ["log", "--name-only", "--pretty=%b"]
+        cmd = ['git', 'log', '--name-only', '--author-date-order', '--pretty=%b']
         if before_date:
-            log_stmt += [f"--until={before_date}"]
+            cmd += [f"--until={before_date}"]
         if after_date:
-            log_stmt += [f"--since={after_date}"]
+            cmd += [f"--since={after_date}"]
 
-        # FIXME: Figure out why pygit isn't working right here.
-        # filenames = self.execute_cmd(log_stmt)
-
-        raw = subprocess.check_output(
-            ['git', 'log', '--name-only', '--author-date-order', '--pretty=%b'],
-            cwd=self.project_dir
-        ).decode('ascii').split('\n')
+        raw = subprocess.check_output(cmd, cwd=self.project_dir).decode('ascii').split('\n')
 
         filenames = [f for f in raw if f and os.path.exists(os.path.join(self.base_dir, f))]
         out = []
