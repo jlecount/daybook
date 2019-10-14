@@ -112,10 +112,13 @@ def edit_entry(diary_name: str, entries_back_num:int=0, with_tags:str=None) -> N
         with_tags=with_tags
     )
     f, entry = entries[0]
-    entry = '\n'.join(entry)
+    entry = ''.join(entry)
     title = _get_entry_title(entry)
-    entry = _editor_create_entry(entry)
-    book.commit_edited_entry(f, title, entry)
+    entry_modified = _editor_create_entry(entry)
+    if entry_modified == entry:
+        print("No changes.  Nothing committed.")
+    else:
+        book.commit_edited_entry(f, title, entry_modified)
 
 
 def create_entry(diary_name: str, is_encrypted:bool=False) -> None:
@@ -141,7 +144,7 @@ def list_entries(diary_name: str, max_entries:int=None, with_tags=None, with_tex
         _puts(_colored.blue("----- {f} -----".format(f=f)))
         for line in e:
             with _indent(4):
-                _puts(line)
+                _puts(line.strip())
 
 
 
