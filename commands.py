@@ -111,7 +111,7 @@ def edit_entry(diary_name: str, entries_back_num:int=0, with_tags:str=None) -> N
         max_entries=max_entries,
         with_tags=with_tags
     )
-    f, entry = entries[0]
+    f, entry = entries[-1]
     entry = ''.join(entry)
     title = _get_entry_title(entry)
     entry_modified = _editor_create_entry(entry)
