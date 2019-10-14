@@ -140,8 +140,11 @@ def list_entries(diary_name: str, max_entries:int=None, with_tags=None, with_tex
         after_date=after_date,
         before_date=before_date
     )
+    n=0
     for f, e in entries:
-        _puts(_colored.blue("----- {f} -----".format(f=f)))
+        order_description = "(most recent)" if n==0 else "({n} back)".format(n=n)
+        _puts(_colored.blue("----- {f} {order_description} -----".format(f=f, order_description=order_description)))
+        n+=1
         for line in e:
             with _indent(4):
                 _puts(line.strip())
