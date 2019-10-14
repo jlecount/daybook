@@ -41,6 +41,13 @@ class Daybook(object):
         except subprocess.CalledProcessError as e:
             return []
 
+    def commit_edited_entry(self, filename: str, title:str, entry: str) -> None:
+        self._write_entry_to_disk(filename, entry)
+        self.execute_cmd("add {}".format(filename))
+
+        results = self.execute_cmd(['commit', '-m', '{}'.format("{}".format(title))])
+        return "Updated entry: {0} with title: {1}".format(filename, title)
+
     def commit_entry(self, entry: str, title=None, is_encrypted=False) -> None:
         """Commit the entry to git"""
         if not title:
@@ -84,13 +91,19 @@ class Daybook(object):
         # filenames = self.execute_cmd(log_stmt)
 
         raw = subprocess.check_output(
-            ['git', 'log', '--name-only', '--pretty=%b'],
+            ['git', 'log', '--name-only', '--author-date-order', '--pretty=%b'],
             cwd=self.project_dir
         ).decode('ascii').split('\n')
 
         filenames = [f for f in raw if f and os.path.exists(os.path.join(self.base_dir, f))]
+        out = []
+        for fn in filenames:
+            if fn:
+                value = os.path.join(os.path.dirname(self.project_dir), fn)
+                if value not in out:
+                    out.append(value)
+        return out
 
-        return set([os.path.join(os.path.dirname(self.project_dir), fn) for fn in filenames if fn])
 
     def _found_any_tag_in_entry(self, entry_lines, tag_list):
         entry_str = '\n'.join(entry_lines)

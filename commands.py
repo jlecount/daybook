@@ -75,8 +75,8 @@ def list_daybooks():
         print(db)
 
 
-def _editor_create_new_entry() -> str:
-    initial_message = b""
+def _editor_create_entry(previous_contents:str=None) -> str:
+    initial_message = bytes(previous_contents.encode('utf-8')) or b""
     with tempfile.NamedTemporaryFile(suffix=".tmp") as tf:
         tf.write(initial_message)
         tf.flush()
@@ -104,9 +104,23 @@ def _get_entry_title(entry: str):
             return l
 
 
-def create_entry(diary_name: str, is_encrypted=False) -> None:
+def edit_entry(diary_name: str, entries_back_num:int=0, with_tags:str=None) -> None:
     book = Daybook(diary_name, _get_base_dir_for_diary(diary_name), _get_remote_url_for_diary(diary_name))
-    entry = _editor_create_new_entry()
+    max_entries = entries_back_num + 1
+    entries = book.list_entries(
+        max_entries=max_entries,
+        with_tags=with_tags
+    )
+    f, entry = entries[0]
+    entry = '\n'.join(entry)
+    title = _get_entry_title(entry)
+    entry = _editor_create_entry(entry)
+    book.commit_edited_entry(f, title, entry)
+
+
+def create_entry(diary_name: str, is_encrypted:bool=False) -> None:
+    book = Daybook(diary_name, _get_base_dir_for_diary(diary_name), _get_remote_url_for_diary(diary_name))
+    entry = _editor_create_entry()
     title = _get_entry_title(entry)
     if is_encrypted:
         entry = encryption.encrypt(entry)
