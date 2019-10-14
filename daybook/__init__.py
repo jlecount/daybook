@@ -43,12 +43,14 @@ class Daybook(object):
 
     def commit_entry(self, entry: str, title=None, is_encrypted=False) -> None:
         """Commit the entry to git"""
+        if not title:
+            title = "<no title given>"
         filename = self._get_entry_filename(is_encrypted=is_encrypted)
         self._write_entry_to_disk(filename, entry)
         self.execute_cmd("add {}".format(filename))
 
-        print(self.execute_cmd(['commit', '-m', '{}'.format("New entry: {}".format(entry.title))]))
-        return "Saved entry: {}".format(filename)
+        results = self.execute_cmd(['commit', '-m', '{}'.format("{}".format(title))])
+        return "Saved entry: {0} with title: {1}".format(filename, title)
 
     def _get_entry_filename(self, is_encrypted=False):
         """
@@ -65,6 +67,13 @@ class Daybook(object):
             fp.writelines(entry)
 
     def _get_files_matching_dates(self, before_date, after_date):
+        """
+
+        :param before_date: a date format to be parsed by git --until
+        :param after_date: a date format to be parsed by git --since
+        
+        :return: a set of files between two dates.  The format should be that which can be parsed by git.
+        """
         log_stmt = ["log", "--name-only", "--pretty=%b"]
         if before_date:
             log_stmt += [f"--until={before_date}"]
@@ -81,7 +90,7 @@ class Daybook(object):
 
         filenames = [f for f in raw if f and os.path.exists(os.path.join(self.base_dir, f))]
 
-        return [os.path.join(os.path.dirname(self.project_dir), fn) for fn in filenames if fn]
+        return set([os.path.join(os.path.dirname(self.project_dir), fn) for fn in filenames if fn])
 
     def _found_any_tag_in_entry(self, entry_lines, tag_list):
         entry_str = '\n'.join(entry_lines)

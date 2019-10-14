@@ -110,7 +110,7 @@ def create_entry(diary_name: str, is_encrypted=False) -> None:
     title = _get_entry_title(entry)
     if is_encrypted:
         entry = encryption.encrypt(entry)
-    book.commit_entry(entry, title=title, is_encrypted=is_encrypted)
+    print(book.commit_entry(entry, title=title, is_encrypted=is_encrypted))
 
 
 def list_entries(diary_name: str, max_entries:int=None, with_tags=None, with_text=None, before_date=None, after_date=None):
