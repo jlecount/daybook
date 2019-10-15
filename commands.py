@@ -118,7 +118,7 @@ def edit_entry(diary_name: str, entries_back_num:int=0, with_tags:str=None) -> N
     if entry_modified == entry:
         print("No changes.  Nothing committed.")
     else:
-        book.commit_edited_entry(f, title, entry_modified)
+        print(book.commit_edited_entry(f, title, entry_modified))
 
 
 def create_entry(diary_name: str, is_encrypted:bool=False) -> None:
