@@ -11,6 +11,7 @@ from inspect import isfunction as _isfunction
 from pygit import PyGit
 
 from daybook import Daybook, encryption
+from daybook.utils import str_to_bool
 
 DAYBOOK__CFG = os.path.join(os.getenv("HOME"), ".daybook.yml")
 EDITOR = os.environ.get('EDITOR', 'vim')
@@ -75,12 +76,33 @@ def list_daybooks():
         print(db)
 
 
-def _editor_create_entry(previous_contents:str="") -> str:
-    initial_message = bytes(previous_contents.encode('utf-8')) or b""
+def _editor_create_entry(previous_contents:str="", title:str="", tags:str="") -> str:
+    if previous_contents:
+        initial_message = bytes(previous_contents.encode('utf-8'))
+    else:
+        if tags:
+            tags = ' '.join(['@@{0}'.format(t.strip()) for t in tags.split(',')])
+
+        if not (title or tags):
+            initial_message = b""
+        elif title and tags:
+            initial_message = bytes('{0}\n\n{1}'.format(title, tags), 'utf-8')
+        elif title:
+            initial_message = bytes(title, 'utf-8')
+        elif tags:
+            initial_message = bytes(tags, 'utf-8')
+
     with tempfile.NamedTemporaryFile(suffix=".tmp") as tf:
         tf.write(initial_message)
         tf.flush()
-        subprocess.call([EDITOR, tf.name])
+
+        # if vim, start at EOF
+        if 'vim' in EDITOR:
+            cmd = [EDITOR, '+', tf.name]
+        else:
+            cmd = [EDITOR, tf.name]
+
+        subprocess.call(cmd)
 
         # do the parsing with `tf` using regular File operations.
         # for instance:
@@ -109,20 +131,34 @@ def edit_entry(diary_name: str,
                with_tags:str=None,
                before_date=None,
                after_date=None,
-               is_encrypted:bool=None,
+               is_encrypted_on_create:bool=None,
+               title_on_create:str="",
+               tags_on_create:str="",
                create_if_missing:bool=False) -> None:
+    """
+    Edit an entry.  Optionally this can be created if it didn't already exist.
+
+    :param diary_name: the name of the diary
+    :param entries_back_num: the entry number to edit.  The most recent is 0 (default), before that is 1, etc.
+    :param with_tags: filter entries with tags given
+    :param before_date: filter entries found via git time filtering (like with git --until)
+    :param after_date: filter entries found via git time filtering (like with git --since)
+    :param is_encrypted_on_create: if create_if_missing, should the new entry be encrypted?
+    :param title_on_create: if create_if_missing, optional title
+    :param tags_on_create: if create_if_missing, optional tags
+    :param create_if_missing: should the entry be created if nothing was found?
+    :return: None
+    """
     book = Daybook(diary_name, _get_base_dir_for_diary(diary_name), _get_remote_url_for_diary(diary_name))
     max_entries = entries_back_num + 1
 
     # Tempoary workaround to argh not processing boolean strings properly...
-    if type(is_encrypted) is str:
-        if is_encrypted not in ["False", "True"]:
-            print("is_encrypted must only be True or False")
-            sys.exit(1)
-        else:
-            is_encrypted = eval(is_encrypted)
+    try:
+        is_encrypted_on_create = str_to_bool(is_encrypted_on_create)
+    except:
+        print("is_encrypted must only be True or False")
+        sys.exit(1)
 
-    print("is_encrypted is {0} of type {1}".format(is_encrypted, type(is_encrypted)))
     entries = book.list_entries(
         max_entries=max_entries,
         after_date=after_date,
@@ -131,11 +167,16 @@ def edit_entry(diary_name: str,
     )
     if not entries:
         if create_if_missing:
-            if is_encrypted == None:
+            if is_encrypted_on_create == None:
                 print("You must pass in either True or False for --is-encrypted when creating a new entry implicitly.")
                 return
             else:
-                create_entry(diary_name, is_encrypted)
+                create_entry(
+                    diary_name,
+                    is_encrypted=is_encrypted_on_create,
+                    tags=tags_on_create,
+                    title=title_on_create
+                )
         else:
             print("No entry found")
             return
@@ -153,10 +194,17 @@ def edit_entry(diary_name: str,
             print(book.commit_edited_entry(f, title, entry_modified))
 
 
-def create_entry(diary_name: str, is_encrypted:bool=False) -> None:
+def create_entry(diary_name: str, tags:str="", title:str=None, is_encrypted:bool=False) -> None:
     book = Daybook(diary_name, _get_base_dir_for_diary(diary_name), _get_remote_url_for_diary(diary_name))
-    entry = _editor_create_entry()
+    entry = _editor_create_entry(title=title, tags=tags)
     title = _get_entry_title(entry)
+
+    try:
+        is_encrypted = str_to_bool(is_encrypted)
+    except:
+        print("is_encrypted must only be True or False")
+        sys.exit(1)
+
     if is_encrypted:
         entry = encryption.encrypt(entry)
 
