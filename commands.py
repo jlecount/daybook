@@ -75,7 +75,7 @@ def list_daybooks():
         print(db)
 
 
-def _editor_create_entry(previous_contents:str=None) -> str:
+def _editor_create_entry(previous_contents:str="") -> str:
     initial_message = bytes(previous_contents.encode('utf-8')) or b""
     with tempfile.NamedTemporaryFile(suffix=".tmp") as tf:
         tf.write(initial_message)
@@ -104,21 +104,53 @@ def _get_entry_title(entry: str):
             return l
 
 
-def edit_entry(diary_name: str, entries_back_num:int=0, with_tags:str=None) -> None:
+def edit_entry(diary_name: str,
+               entries_back_num:int=0,
+               with_tags:str=None,
+               before_date=None,
+               after_date=None,
+               is_encrypted:bool=None,
+               create_if_missing:bool=False) -> None:
     book = Daybook(diary_name, _get_base_dir_for_diary(diary_name), _get_remote_url_for_diary(diary_name))
     max_entries = entries_back_num + 1
+
+    # Tempoary workaround to argh not processing boolean strings properly...
+    if type(is_encrypted) is str:
+        if is_encrypted not in ["False", "True"]:
+            print("is_encrypted must only be True or False")
+            sys.exit(1)
+        else:
+            is_encrypted = eval(is_encrypted)
+
+    print("is_encrypted is {0} of type {1}".format(is_encrypted, type(is_encrypted)))
     entries = book.list_entries(
         max_entries=max_entries,
+        after_date=after_date,
+        before_date=before_date,
         with_tags=with_tags
     )
-    f, entry = entries[-1]
-    entry = ''.join(entry)
-    title = _get_entry_title(entry)
-    entry_modified = _editor_create_entry(entry)
-    if entry_modified == entry:
-        print("No changes.  Nothing committed.")
+    if not entries:
+        if create_if_missing:
+            if is_encrypted == None:
+                print("You must pass in either True or False for --is-encrypted when creating a new entry implicitly.")
+                return
+            else:
+                create_entry(diary_name, is_encrypted)
+        else:
+            print("No entry found")
+            return
     else:
-        print(book.commit_edited_entry(f, title, entry_modified))
+        f, entry = entries[-1]
+        entry = ''.join(entry)
+        title = _get_entry_title(entry)
+        entry_modified = _editor_create_entry(entry)
+
+        if not entry_modified:
+            print("No entry.  Nothing committed.")
+        elif entry_modified == entry:
+            print("No changes.  Nothing committed.")
+        else:
+            print(book.commit_edited_entry(f, title, entry_modified))
 
 
 def create_entry(diary_name: str, is_encrypted:bool=False) -> None:
@@ -127,7 +159,11 @@ def create_entry(diary_name: str, is_encrypted:bool=False) -> None:
     title = _get_entry_title(entry)
     if is_encrypted:
         entry = encryption.encrypt(entry)
-    print(book.commit_entry(entry, title=title, is_encrypted=is_encrypted))
+
+    if not entry:
+        print("No entry.  Nothing committed.")
+    else:
+        print(book.commit_entry(entry, title=title, is_encrypted=is_encrypted))
 
 
 def list_entries(diary_name: str, max_entries:int=None, with_tags=None, with_text=None, before_date=None, after_date=None):
