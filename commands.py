@@ -245,6 +245,8 @@ def sync():
     base_dirs = [v[1]['base_dir'] for v in _get_daybook_cfg()['daybooks'].items()]
     for b in base_dirs:
         PyGit(b)("pull origin master")
+        PyGit(b)("rebase origin/master")
+        PyGit(b)("push origin master")
 
 def list_commands() -> None:
     print("""
