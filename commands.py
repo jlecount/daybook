@@ -3,8 +3,6 @@ import sys
 import yaml
 from clint.textui import puts as _puts, indent as _indent, colored as _colored
 import os
-import tempfile
-import subprocess
 from inspect import getmembers as _getmembers
 from inspect import isfunction as _isfunction
 
@@ -12,9 +10,9 @@ from pygit import PyGit
 
 from daybook import Daybook, encryption
 from daybook.utils import str_to_bool
+from fileio import editor_create_entry, write_config, read_config
 
-DAYBOOK__CFG = os.path.join(os.getenv("HOME"), ".daybook.yml")
-EDITOR = os.environ.get('EDITOR', 'vim')
+DAYBOOK_CFG = os.path.join(os.getenv("HOME"), ".daybook.yml")
 _CFG = None
 
 
@@ -27,11 +25,7 @@ def get_commands() -> list:
 def _get_daybook_cfg():
     global _CFG
     if not _CFG:
-        if os.path.exists(DAYBOOK__CFG):
-            with open(DAYBOOK__CFG) as fp:
-                _CFG = yaml.safe_load(fp)
-        else:
-            _CFG = {'daybooks': {}}
+        _CFG = read_config(DAYBOOK_CFG)
     return _CFG
 
 def _get_remote_url_for_diary(d):
@@ -62,8 +56,7 @@ def _add_project_to_cfg(existing_cfg, name, base_dir, remote_url, default_templa
         cfg['default_template'] = default_template_filename
 
     existing_cfg['daybooks'][name] = cfg
-    with open(DAYBOOK__CFG, 'w') as fp:
-        yaml.safe_dump(existing_cfg, fp)
+    write_config(DAYBOOK_CFG, existing_cfg)
 
 
 def install(diary_name: str, base_dir: str, remote_url: str, default_template_filename: str = None):
@@ -76,39 +69,6 @@ def list_daybooks():
         print(db)
 
 
-def _editor_create_entry(previous_contents:str="", title:str="", tags:str="") -> str:
-    if previous_contents:
-        initial_message = bytes(previous_contents.encode('utf-8'))
-    else:
-        if tags:
-            tags = ' '.join(['@@{0}'.format(t.strip()) for t in tags.split(',')])
-
-        if not (title or tags):
-            initial_message = b""
-        elif title and tags:
-            initial_message = bytes('{0}\n\n{1}'.format(title, tags), 'utf-8')
-        elif title:
-            initial_message = bytes(title, 'utf-8')
-        elif tags:
-            initial_message = bytes(tags, 'utf-8')
-
-    with tempfile.NamedTemporaryFile(suffix=".tmp") as tf:
-        tf.write(initial_message)
-        tf.flush()
-
-        # if vim, start at EOF
-        if 'vim' in EDITOR:
-            cmd = [EDITOR, '+', tf.name]
-        else:
-            cmd = [EDITOR, tf.name]
-
-        subprocess.call(cmd)
-
-        # do the parsing with `tf` using regular File operations.
-        # for instance:
-        tf.seek(0)
-        edited_message = tf.read()
-        return edited_message.decode("utf-8")
 
 
 def _get_entry_title(entry: str):
@@ -184,7 +144,7 @@ def edit_entry(diary_name: str,
         f, entry = entries[-1]
         entry = ''.join(entry)
         title = _get_entry_title(entry)
-        entry_modified = _editor_create_entry(entry)
+        entry_modified = editor_create_entry(entry)
 
         if not entry_modified:
             print("No entry.  Nothing committed.")
@@ -196,7 +156,7 @@ def edit_entry(diary_name: str,
 
 def create_entry(diary_name: str, tags:str="", title:str=None, is_encrypted:bool=False) -> None:
     book = Daybook(diary_name, _get_base_dir_for_diary(diary_name), _get_remote_url_for_diary(diary_name))
-    entry = _editor_create_entry(title=title, tags=tags)
+    entry = editor_create_entry(title=title, tags=tags)
     title = _get_entry_title(entry)
 
     try:
@@ -232,7 +192,6 @@ def list_entries(diary_name: str, max_entries:int=None, with_tags=None, with_tex
         for line in e:
             with _indent(4):
                 _puts(line.strip())
-
 
 
 
