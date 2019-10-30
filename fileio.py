@@ -22,7 +22,6 @@ def editor_create_entry(previous_contents:str="", title:str="", tags:str="") -> 
             initial_message = bytes(tags, 'utf-8')
 
     with tempfile.NamedTemporaryFile(suffix=".tmp") as tf:
-        print("Debug -- tf is {}".format(tf.name))
         tf.write(initial_message)
         tf.flush()
 
@@ -32,7 +31,6 @@ def editor_create_entry(previous_contents:str="", title:str="", tags:str="") -> 
         else:
             cmd = [EDITOR, tf.name]
 
-        print("Executing command: {}".format(cmd))
         subprocess.call(cmd)
 
         # do the parsing with `tf` using regular File operations.
