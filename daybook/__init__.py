@@ -87,8 +87,7 @@ class Daybook(object):
         if after_date:
             cmd += [f"--since={after_date}"]
 
-        # add current dir
-        cmd += '.'
+        cmd += ['.'] # append the relative-dir that represents the book context we're in
 
         raw = subprocess.check_output(cmd, cwd=self.project_dir).decode('ascii').split('\n')
 
