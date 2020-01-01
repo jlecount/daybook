@@ -81,7 +81,7 @@ class Daybook(object):
         
         :return: a set of files between two dates.  The format should be that which can be parsed by git.
         """
-        cmd = ['git', 'log', '--name-only', '--author-date-order', '--pretty=%b']
+        cmd = ['git', 'log', '--name-only', '--author-date-order', '--pretty=%b', '.']
         if before_date:
             cmd += [f"--until={before_date}"]
         if after_date:
