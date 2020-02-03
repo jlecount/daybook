@@ -86,6 +86,63 @@ def _get_entry_title(entry: str):
             return l
 
 
+def delete_entry(diary_name: str,
+               entries_back_num:int=0,
+               with_tags:str=None,
+               before_date=None,
+               after_date=None,
+               is_encrypted_on_create:bool=None,
+               title_on_create:str="",
+               tags_on_create:str="",
+               create_if_missing:bool=False) -> None:
+    """
+     Delete entries.  This deletes the underlying files, and does not rewind entries back in time, per se.
+
+    :param diary_name: the name of the diary
+    :param entries_back_num: the entry number to edit.  The most recent is 0 (default), before that is 1, etc.
+    :param with_tags: filter entries with tags given
+    :param before_date: filter entries found via git time filtering (like with git --until)
+    :param after_date: filter entries found via git time filtering (like with git --since)
+    :param is_encrypted_on_create: if create_if_missing, should the new entry be encrypted?
+    :return: None
+    """
+    book = Daybook(diary_name, _get_base_dir_for_diary(diary_name), _get_remote_url_for_diary(diary_name))
+    max_entries = entries_back_num + 1
+
+    # Tempoary workaround to argh not processing boolean strings properly...
+    try:
+        is_encrypted_on_create = str_to_bool(is_encrypted_on_create)
+    except:
+        print("is_encrypted must only be True or False")
+        sys.exit(1)
+
+    entries = book.list_entries(
+        max_entries=max_entries,
+        after_date=after_date,
+        before_date=before_date,
+        with_tags=with_tags
+    )
+    if not entries:
+        print("No entry/entries found")
+        return
+    else:
+        filenames = [f for f,_ in entries]
+        num_entries = len(filenames)
+        print("You are about to delete the following {} entries.".format(num_entries))
+        print(50 * '-')
+        for f in filenames:
+            with open(f, 'r') as fp:
+                for line in fp.readlines():
+                    print(line.strip())
+        print(50 * '-')
+        print("Confirm deletion -- y/n")
+        resp = sys.stdin.readline().strip()
+        if resp == 'y':
+            print("Deleting {} entries.".format(num_entries))
+            book.execute_cmd(["rm", "{}".format(' '.join(filenames))])
+            book.execute_cmd(["commit", "-m", '{}'.format("deletion of entries: {}".format(', '.join(filenames)))])
+
+
 def edit_entry(diary_name: str,
                entries_back_num:int=0,
                with_tags:str=None,
