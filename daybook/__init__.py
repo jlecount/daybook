@@ -111,9 +111,9 @@ class Daybook(object):
     def _found_any_text_in_entry(self, entry_list, text):
         return text in '\n'.join(entry_list)
 
-    def _get_matches(self, max_entries:int=10, with_tags:str=None, with_text:str=None, after_date=None, before_date=None) -> tuple:
+    def _get_matches(self, max_entries:int=-1, with_tags:str=None, with_text:str=None, after_date=None, before_date=None) -> tuple:
         """
-        :param max_entries: max number of matches to return
+        :param max_entries: max number of matches to return.  If negative, return all
         :param with_tags: filter on tags.  None means no tag filtering
         :param with_text: filter on text.  None means no text filtering
         :param after_date: Only return entries after date. None means no after date filtering
@@ -134,15 +134,15 @@ class Daybook(object):
                         continue
 
                 num_found += 1
-                if max_entries and num_found > max_entries:
+                if max_entries > 0 and num_found > max_entries:
                     return yaml_list
 
                 yaml_list.append((f, entry))
         return yaml_list
 
-    def list_entries(self, max_entries=10, with_tags=None, with_text=None, after_date=None, before_date=None) -> tuple:
+    def list_entries(self, max_entries=-1, with_tags=None, with_text=None, after_date=None, before_date=None) -> tuple:
         """
-        :param max_entries: max number of matches to return
+        :param max_entries: max number of matches to return.  If negative, return all
         :param with_tags: filter on tags.  None means no tag filtering
         :param with_text: filter on text.  None means no text filtering
         :param after_date: Only return entries after date. None means no after date filtering
