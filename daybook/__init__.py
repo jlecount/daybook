@@ -9,7 +9,7 @@ import time
 import yaml
 from pygit import PyGit
 
-from daybook.utils import get_current_date
+from daybook.utils import get_current_date, sort_filename_by_date
 
 
 class Daybook(object):
@@ -93,7 +93,8 @@ class Daybook(object):
 
         filenames = [f for f in raw if f and os.path.exists(os.path.join(self.base_dir, f))]
         out = []
-        for fn in filenames:
+        sorted_filenames = sorted(filenames, key=sort_filename_by_date, reverse=True)
+        for fn in sorted_filenames:
             if fn:
                 value = os.path.join(os.path.dirname(self.project_dir), fn)
                 if value not in out:

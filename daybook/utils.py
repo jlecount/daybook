@@ -1,5 +1,13 @@
+import re
 import datetime
 
+
+def sort_filename_by_date(fn:str):
+    """
+    Returns a sort key usable by the sorted() builtin
+    :param fn: the filename in the format <dir>/mm_dd_yyyy/<timestamp>.<micro>.txt
+    """
+    return int(re.sub(r'.*/(\d\d)_(\d\d)_(\d\d\d\d)/(\d+)\..*', '\\3\\1\\2\\4', fn))
 
 def str_to_bool(v:str) -> bool:
     """
