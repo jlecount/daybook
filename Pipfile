@@ -7,6 +7,9 @@ verify_ssl = true
 
 [packages]
 argh = "*"
+pyyaml = "*"
+clint = "*"
+pygit = {editable = true, git = "https://github.com/jlecount/pygit.git", ref = 'allow_list_or_str_to_git'}
 
 [requires]
 python_version = "3.7"
