@@ -9,7 +9,7 @@ import time
 import yaml
 from pygit import PyGit
 
-from daybook.utils import get_current_date, sort_filename_by_date
+from daybook.utils import get_current_date, sort_filename_by_date, get_entry_filename
 
 
 class Daybook(object):
@@ -48,25 +48,23 @@ class Daybook(object):
         results = self.execute_cmd(['commit', '-m', '{}'.format("{}".format(title))])
         return "Updated entry: {0} with title: {1}".format(filename, title)
 
-    def commit_entry(self, entry: str, title=None, is_encrypted=False) -> None:
+    def commit_entry(self, entry: str, filename:str, title=None) -> None:
         """Commit the entry to git"""
         if not title:
             title = "<no title given>"
-        filename = self._get_entry_filename(is_encrypted=is_encrypted)
         self._write_entry_to_disk(filename, entry)
         self.execute_cmd("add {}".format(filename))
 
         results = self.execute_cmd(['commit', '-m', '{}'.format("{}".format(title))])
         return "Saved entry: {0} with title: {1}".format(filename, title)
 
-    def _get_entry_filename(self, is_encrypted=False):
+    def _get_entry_filename(self, timestamp=time.time(), is_encrypted=False):
         """
         Get a filename for a new entry.
         Sure, you could get name collisions if you call this more than once a second, but that's not a use-case here.
-        :return:
+        :return str: the filename
         """
-        extension = ".txt.encrypted" if is_encrypted else ".txt"
-        return os.path.join(self.project_dir, get_current_date(), str(time.time()) + extension)
+        return get_entry_filename(self.project_dir, timestamp, is_encrypted)
 
     def _write_entry_to_disk(self, filename: str, entry: str) -> None:
         os.makedirs(os.path.dirname(filename), exist_ok=True)

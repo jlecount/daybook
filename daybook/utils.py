@@ -1,6 +1,16 @@
+import os
 import re
 import datetime
 
+
+def get_entry_filename(project_dir, timestamp:float, is_encrypted:bool):
+    """
+    Construct a filename for a given timestamp, encrypted or not
+    :param timestamp: the time, via time.time()
+    :param is_encrypted: the time, via time.time()
+    """
+    extension = ".txt.encrypted" if is_encrypted else ".txt"
+    return os.path.join(project_dir, get_current_date(), str(timestamp) + extension)
 
 def sort_filename_by_date(fn:str):
     """

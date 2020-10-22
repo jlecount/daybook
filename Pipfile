@@ -10,6 +10,7 @@ argh = "*"
 pyyaml = "*"
 clint = "*"
 pygit = {editable = true, git = "https://github.com/jlecount/pygit.git", ref = 'allow_list_or_str_to_git'}
+ipdb = "*"
 
 [requires]
 python_version = "3.7"

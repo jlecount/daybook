@@ -1,5 +1,6 @@
 import re
 import sys
+import time
 import yaml
 from clint.textui import puts as _puts, indent as _indent, colored as _colored
 import os
@@ -9,7 +10,7 @@ from inspect import isfunction as _isfunction
 from pygit import PyGit
 
 from daybook import Daybook, encryption
-from daybook.utils import str_to_bool
+from daybook.utils import str_to_bool, get_entry_filename
 from fileio import editor_create_entry, write_config, read_config
 
 DAYBOOK_CFG = os.path.join(os.getenv("HOME"), ".daybook.yml")
@@ -182,6 +183,7 @@ def edit_entry(diary_name: str,
         before_date=before_date,
         with_tags=with_tags
     )
+
     if not entries:
         if create_if_missing:
             if is_encrypted_on_create == None:
@@ -216,6 +218,7 @@ def create_entry(diary_name: str, tags:str="", title:str=None, is_encrypted:bool
     entry = editor_create_entry(title=title, tags=tags)
     title = _get_entry_title(entry)
 
+    entry_filename = get_entry_filename(book.project_dir, time.time(), is_encrypted)
     try:
         is_encrypted = str_to_bool(is_encrypted)
     except:
@@ -228,7 +231,7 @@ def create_entry(diary_name: str, tags:str="", title:str=None, is_encrypted:bool
     if not entry:
         print("No entry.  Nothing committed.")
     else:
-        print(book.commit_entry(entry, title=title, is_encrypted=is_encrypted))
+        print(book.commit_entry(entry, filename=entry_filename, title=title))
 
 
 def list_entries(diary_name: str, max_entries:int=None, with_tags=None, with_text=None, before_date=None, after_date=None):
