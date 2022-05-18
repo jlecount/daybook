@@ -1,0 +1,5 @@
+Daily journal: Thu 22 Oct 2020 02:24:27 PM PDT
+
+@@daily
+
+foo
